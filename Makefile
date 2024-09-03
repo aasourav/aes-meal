@@ -2,8 +2,7 @@ include .env
 
 up:
 	@echo "Starting containers..."
-	docker-compose up --build -d --remove-orphans
-
+	docker compose up -f docker-compose --build -d --remove-orphans 
 down:
 	@echo "Stoping containers..."
 	docker-compose down

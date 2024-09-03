@@ -5,7 +5,7 @@ go 1.21.0
 require (
 	github.com/gin-contrib/cors v1.7.2
 	github.com/gin-gonic/gin v1.10.0
-	github.com/go-chi/chi/v5 v5.0.12
+	github.com/joho/godotenv v1.5.1
 	go.mongodb.org/mongo-driver v1.14.0
 )
 
