@@ -4,44 +4,69 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
 	"time"
 
-	"github.com/go-mongo-todos/db"
-	"github.com/go-mongo-todos/handlers"
-	"github.com/go-mongo-todos/services"
-	"github.com/joho/godotenv"
+	"github.com/ebubekiryigit/golang-mongodb-rest-api-starter/routes"
+	"github.com/ebubekiryigit/golang-mongodb-rest-api-starter/services"
 )
 
-type Application struct {
-	Models services.Models
-}
+// @title GoLang Rest API Starter Doc
+// @version 1.0
+// @description GoLang - Gin - RESTful - MongoDB - Redis
+// @termsOfService https://swagger.io/terms/
 
+// @contact.name Ebubekir Yiğit
+// @contact.url https://github.com/ebubekiryigit
+// @contact.email ebubekiryigit6@gmail.com
+
+// @license.name MIT License
+// @license.url https://opensource.org/licenses/MIT
+
+// @host localhost:8080
+// @BasePath /
+// @schemes http
+
+// @securityDefinitions.apikey ApiKeyAuth
+// @in header
+// @name Bearer-Token
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Println("failed to load env file: ", err.Error())
+	services.LoadConfig()
+	services.InitMongoDB()
+
+	// if services.Config.UseRedis {
+	// 	services.CheckRedisConnection()
+	// }
+
+	routes.InitGin()
+	router := routes.New()
+
+	server := &http.Server{
+		Addr:         services.Config.ServerAddr + ":" + services.Config.ServerPort,
+		WriteTimeout: time.Second * 30,
+		ReadTimeout:  time.Second * 30,
+		IdleTimeout:  time.Second * 30,
+		Handler:      router,
 	}
-	mongoClient, err := db.ConnectToMongo()
-	if err != nil {
-		log.Println("failed to connect: ", err.Error())
 
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-	defer cancel()
-
-	defer func() {
-		if err = mongoClient.Disconnect(ctx); err != nil {
-			// panic(err)
-			log.Println(err.Error())
+	go func() {
+		if err := server.ListenAndServe(); err != nil {
+			log.Printf("listen: %s\n", err)
 		}
 	}()
 
-	services.New(mongoClient)
+	// Wait for interrupt signal to gracefully shut down the server with
+	// a timeout of 15 seconds.
+	quit := make(chan os.Signal)
+	signal.Notify(quit, os.Interrupt)
+	<-quit
+	log.Println("Shutdown Server ...")
 
-	if err := http.ListenAndServe(":8080", handlers.CreateRouter()); err != nil {
-		log.Panicln("servier running error: ", err.Error())
-	} else {
-		log.Println("Server running in port", 8080)
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+	if err := server.Shutdown(ctx); err != nil {
+		log.Fatal("Server Shutdown:", err)
 	}
+	log.Println("Server exiting")
 }
