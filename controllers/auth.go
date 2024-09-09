@@ -1,14 +1,15 @@
 package controllers
 
 import (
+	"net/http"
+	"strings"
+
 	"github.com/ebubekiryigit/golang-mongodb-rest-api-starter/models"
 	db "github.com/ebubekiryigit/golang-mongodb-rest-api-starter/models/db"
 	"github.com/ebubekiryigit/golang-mongodb-rest-api-starter/services"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"golang.org/x/crypto/bcrypt"
-	"net/http"
-	"strings"
 )
 
 // Register godoc
@@ -40,7 +41,7 @@ func Register(c *gin.Context) {
 
 	// create user record
 	requestBody.Name = strings.TrimSpace(requestBody.Name)
-	user, err := services.CreateUser(requestBody.Name, requestBody.Email, requestBody.Password)
+	user, err := services.CreateUser(requestBody.Name, requestBody.Email, requestBody.Password, requestBody.EmployeeId)
 	if err != nil {
 		response.Message = err.Error()
 		response.SendResponse(c)

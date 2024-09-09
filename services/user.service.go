@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+
 	db "github.com/ebubekiryigit/golang-mongodb-rest-api-starter/models/db"
 	"github.com/kamva/mgm/v3"
 	"go.mongodb.org/mongo-driver/bson"
@@ -10,13 +11,13 @@ import (
 )
 
 // CreateUser create a user record
-func CreateUser(name string, email string, plainPassword string) (*db.User, error) {
+func CreateUser(name string, email string, plainPassword string, employeeId string) (*db.User, error) {
 	password, err := bcrypt.GenerateFromPassword([]byte(plainPassword), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, errors.New("cannot generate hashed password")
 	}
 
-	user := db.NewUser(email, string(password), name, db.RoleUser)
+	user := db.NewUser(email, string(password), name, db.RoleUser, employeeId)
 	err = mgm.Coll(user).Create(user)
 	if err != nil {
 		return nil, errors.New("cannot create new user")
@@ -54,6 +55,18 @@ func CheckUserMail(email string) error {
 	err := userCollection.First(bson.M{"email": email}, user)
 	if err == nil {
 		return errors.New("email is already in use")
+	}
+
+	return nil
+}
+
+// CheckEmployeeId search user by employeeId, return error if someone uses
+func CheckEmployeeId(employeeId string) error {
+	user := &db.User{}
+	userCollection := mgm.Coll(user)
+	err := userCollection.First(bson.M{"employeeId": employeeId}, user)
+	if err == nil {
+		return errors.New("employeeId is already in use")
 	}
 
 	return nil

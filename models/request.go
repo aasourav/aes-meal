@@ -1,9 +1,10 @@
 package models
 
 import (
+	"regexp"
+
 	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/go-ozzo/ozzo-validation/is"
-	"regexp"
 )
 
 var passwordRule = []validation.Rule{
@@ -13,9 +14,10 @@ var passwordRule = []validation.Rule{
 }
 
 type RegisterRequest struct {
-	Name     string `json:"name"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Name       string `json:"name"`
+	Email      string `json:"email"`
+	EmployeeId string `json:"employeeId"`
+	Password   string `json:"password"`
 }
 
 func (a RegisterRequest) Validate() error {
@@ -23,6 +25,7 @@ func (a RegisterRequest) Validate() error {
 		validation.Field(&a.Name, validation.Required, validation.Length(3, 64)),
 		validation.Field(&a.Email, validation.Required, is.Email),
 		validation.Field(&a.Password, passwordRule...),
+		validation.Field(&a.EmployeeId, validation.Required),
 	)
 }
 
