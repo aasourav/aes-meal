@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func AuthRoute(router *gin.RouterGroup) {
+func UserAuthRoute(router *gin.RouterGroup) {
 	auth := router.Group("/auth")
 	{
 		auth.POST(
@@ -25,6 +25,17 @@ func AuthRoute(router *gin.RouterGroup) {
 			"/refresh",
 			validators.RefreshValidator(),
 			controllers.Refresh,
+		)
+	}
+}
+
+func UserRoute(router *gin.RouterGroup) {
+	user := router.Group("/user")
+	{
+		user.PUT(
+			"/update-weekly-meal-plan",
+			validators.UserWeeklyMealPlanValidator(),
+			controllers.Register,
 		)
 	}
 }

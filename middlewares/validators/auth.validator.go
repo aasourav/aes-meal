@@ -1,10 +1,11 @@
 package validators
 
 import (
+	"net/http"
+
 	"github.com/ebubekiryigit/golang-mongodb-rest-api-starter/models"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
-	"net/http"
 )
 
 func RegisterValidator() gin.HandlerFunc {
@@ -14,6 +15,21 @@ func RegisterValidator() gin.HandlerFunc {
 		_ = c.ShouldBindBodyWith(&registerRequest, binding.JSON)
 
 		if err := registerRequest.Validate(); err != nil {
+			models.SendErrorResponse(c, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		c.Next()
+	}
+}
+
+func UserWeeklyMealPlanValidator() gin.HandlerFunc {
+	return func(c *gin.Context) {
+
+		var weeklyPlanRequest models.WeeklyMealPlanRequest
+		_ = c.ShouldBindBodyWith(&weeklyPlanRequest, binding.JSON)
+
+		if err := weeklyPlanRequest.Validate(); err != nil {
 			models.SendErrorResponse(c, http.StatusBadRequest, err.Error())
 			return
 		}

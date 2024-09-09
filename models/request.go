@@ -14,11 +14,15 @@ var passwordRule = []validation.Rule{
 }
 
 type RegisterRequest struct {
-	Name           string `json:"name"`
-	Email          string `json:"email"`
-	EmployeeId     string `json:"employeeId"`
+	Name       string `json:"name"`
+	Email      string `json:"email"`
+	EmployeeId string `json:"employeeId"`
+	Password   string `json:"password"`
+}
+
+type WeeklyMealPlanRequest struct {
+	UserDocId      string `json:"name"`
 	WeeklyMealPlan []bool `json:"weeklyMealPlan"`
-	Password       string `json:"password"`
 }
 
 func (a RegisterRequest) Validate() error {
@@ -27,6 +31,13 @@ func (a RegisterRequest) Validate() error {
 		validation.Field(&a.Email, validation.Required, is.Email),
 		validation.Field(&a.Password, passwordRule...),
 		validation.Field(&a.EmployeeId, validation.Required),
+	)
+}
+
+func (a WeeklyMealPlanRequest) Validate() error {
+	return validation.ValidateStruct(&a,
+		validation.Field(&a.WeeklyMealPlan, validation.Required, validation.Length(7, 7)),
+		validation.Field(&a.UserDocId, validation.Required),
 	)
 }
 

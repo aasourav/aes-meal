@@ -2,13 +2,13 @@ package controllers
 
 import (
 	"net/http"
-	"strings"
 
 	"github.com/ebubekiryigit/golang-mongodb-rest-api-starter/models"
 	db "github.com/ebubekiryigit/golang-mongodb-rest-api-starter/models/db"
 	"github.com/ebubekiryigit/golang-mongodb-rest-api-starter/services"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -22,55 +22,47 @@ import (
 // @Success      200  {object}  models.Response
 // @Failure      400  {object}  models.Response
 // @Router       /auth/register [post]
+
+func UpdateWeeklyMealPlan(c *gin.Context) {
+	response := &models.Response{
+		StatusCode: http.StatusBadRequest,
+		Success:    false,
+	}
+
+	idHex := c.Param("id")
+	noteId, _ := primitive.ObjectIDFromHex(idHex)
+
+	userId, exists := c.Get("userId")
+	if !exists {
+		response.Message = "cannot get user"
+		response.SendResponse(c)
+		return
+	}
+
+	var noteRequest models.NoteRequest
+	_ = c.ShouldBindBodyWith(&noteRequest, binding.JSON)
+
+	err := services.UpdateNote(userId.(primitive.ObjectID), noteId, &noteRequest)
+	if err != nil {
+		response.Message = err.Error()
+		response.SendResponse(c)
+		return
+	}
+
+	response.StatusCode = http.StatusOK
+	response.Success = true
+	response.SendResponse(c)
+}
+
 func Register(c *gin.Context) {
-	var requestBody models.RegisterRequest
-	_ = c.ShouldBindBodyWith(&requestBody, binding.JSON)
+	var userBody models.WeeklyMealPlanRequest
+	_ = c.ShouldBindBodyWith(&userBody, binding.JSON)
 
 	response := &models.Response{
 		StatusCode: http.StatusBadRequest,
 		Success:    false,
 	}
 
-	// is email in use
-	err := services.CheckUserMail(requestBody.Email)
-	if err != nil {
-		response.Message = err.Error()
-		response.SendResponse(c)
-		return
-	}
-
-	err = services.CheckEmployeeId(requestBody.EmployeeId)
-	if err != nil {
-		response.Message = err.Error()
-		response.SendResponse(c)
-		return
-	}
-
-	// create user record
-	requestBody.Name = strings.TrimSpace(requestBody.Name)
-	user, err := services.CreateUser(requestBody.Name, requestBody.Email, requestBody.Password, requestBody.EmployeeId)
-	if err != nil {
-		response.Message = err.Error()
-		response.SendResponse(c)
-		return
-	}
-
-	// generate access tokens
-	accessToken, refreshToken, err := services.GenerateAccessTokens(user)
-	if err != nil {
-		response.Message = err.Error()
-		response.SendResponse(c)
-		return
-	}
-
-	response.StatusCode = http.StatusCreated
-	response.Success = true
-	response.Data = gin.H{
-		"user": user,
-		"token": gin.H{
-			"access":  accessToken.GetResponseJson(),
-			"refresh": refreshToken.GetResponseJson()},
-	}
 	response.SendResponse(c)
 }
 
