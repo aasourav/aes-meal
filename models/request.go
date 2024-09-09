@@ -14,10 +14,11 @@ var passwordRule = []validation.Rule{
 }
 
 type RegisterRequest struct {
-	Name       string `json:"name"`
-	Email      string `json:"email"`
-	EmployeeId string `json:"employeeId"`
-	Password   string `json:"password"`
+	Name           string `json:"name"`
+	Email          string `json:"email"`
+	EmployeeId     string `json:"employeeId"`
+	WeeklyMealPlan []bool `json:"weeklyMealPlan"`
+	Password       string `json:"password"`
 }
 
 func (a RegisterRequest) Validate() error {

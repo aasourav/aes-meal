@@ -14,6 +14,7 @@ type User struct {
 	Email            string `json:"email" bson:"email"`
 	Password         string `json:"-" bson:"password"`
 	EmployeeId       string `json:"employeeId" bson:"employeeId"`
+	WeeklyMealPlan   []bool `json:"weeklyMealPlan" bson:"weeklyMealPlan"`
 	Name             string `json:"name" bson:"name"`
 	Role             string `json:"role" bson:"role"`
 	MailVerified     bool   `json:"mail_verified" bson:"mail_verified"`
