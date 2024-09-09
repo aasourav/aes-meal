@@ -39,6 +39,13 @@ func Register(c *gin.Context) {
 		return
 	}
 
+	err = services.CheckEmployeeId(requestBody.EmployeeId)
+	if err != nil {
+		response.Message = err.Error()
+		response.SendResponse(c)
+		return
+	}
+
 	// create user record
 	requestBody.Name = strings.TrimSpace(requestBody.Name)
 	user, err := services.CreateUser(requestBody.Name, requestBody.Email, requestBody.Password, requestBody.EmployeeId)
