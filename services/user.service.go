@@ -58,6 +58,23 @@ func UpdateUsersWeeklyMealPlan(userId primitive.ObjectID, request *models.Weekly
 	return nil
 }
 
+func PendingUsersWeeklyMealPlanService() (*[]db.User, error) {
+	users := &[]db.User{}
+	userColl := &db.User{}
+
+	filter := bson.M{
+		"$where": "this.pendingWeeklyPlan.length > 0",
+	}
+
+	err := mgm.Coll(userColl).SimpleFind(users, filter)
+
+	if err != nil {
+		return nil, errors.New("no pending weekly plan")
+	}
+
+	return users, nil
+}
+
 // FindUserByEmail find user by email
 func FindUserByEmail(email string) (*db.User, error) {
 	user := &db.User{}

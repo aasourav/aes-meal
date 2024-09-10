@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/ebubekiryigit/golang-mongodb-rest-api-starter/models"
@@ -8,7 +9,6 @@ import (
 	"github.com/ebubekiryigit/golang-mongodb-rest-api-starter/services"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -23,14 +23,36 @@ import (
 // @Failure      400  {object}  models.Response
 // @Router       /auth/register [post]
 
+func PendingWeeklyMealPlans(c *gin.Context) {
+	pendingWeeklyPlans, err := services.PendingUsersWeeklyMealPlanService()
+
+	response := &models.Response{
+		StatusCode: http.StatusBadRequest,
+		Success:    false,
+	}
+
+	if err != nil {
+		response.Message = err.Error()
+		response.SendResponse(c)
+		return
+	}
+
+	response.StatusCode = http.StatusOK
+	response.Success = true
+	response.Data = map[string]any{
+		"pendingWeeklyPlans": pendingWeeklyPlans,
+	}
+	response.SendResponse(c)
+}
+
 func UpdateWeeklyMealPlan(c *gin.Context) {
 	response := &models.Response{
 		StatusCode: http.StatusBadRequest,
 		Success:    false,
 	}
 
-	idHex := c.Param("userId")
-	_id, _ := primitive.ObjectIDFromHex(idHex)
+	// idHex := c.Param("userId")
+	// _id, _ := primitive.ObjectIDFromHex(idHex)
 
 	// userId, exists := c.Get("userId")
 	// if !exists {
@@ -38,12 +60,16 @@ func UpdateWeeklyMealPlan(c *gin.Context) {
 	// 	response.SendResponse(c)
 	// 	return
 	// }
+	userInfo, _ := c.Get("userInfo")
+	user, _ := userInfo.(*db.User)
+
+	fmt.Println("MY user:", user.WeeklyMealPlan)
 
 	var weeklyMealPlanRequest models.WeeklyMealPlanRequest
 	_ = c.ShouldBindBodyWith(&weeklyMealPlanRequest, binding.JSON)
 
 	// userId.(primitive.ObjectID)
-	err := services.UpdateUsersWeeklyMealPlan(_id, &weeklyMealPlanRequest)
+	err := services.UpdateUsersWeeklyMealPlan(user.ID, &weeklyMealPlanRequest)
 	if err != nil {
 		response.Message = err.Error()
 		response.SendResponse(c)
@@ -148,30 +174,32 @@ func Refresh(c *gin.Context) {
 		return
 	}
 
-	user, err := services.FindUserById("")
-	if err != nil {
-		response.Message = err.Error()
-		response.SendResponse(c)
-		return
-	}
+	fmt.Println("refresh :", token)
 
-	// delete old token
-	err = services.DeleteTokenById(token.ID)
-	if err != nil {
-		response.Message = err.Error()
-		response.SendResponse(c)
-		return
-	}
+	// user, err := services.FindUserById("")
+	// if err != nil {
+	// 	response.Message = err.Error()
+	// 	response.SendResponse(c)
+	// 	return
+	// }
 
-	accessToken, refreshToken, _ := services.GenerateAccessTokens(user)
-	response.StatusCode = http.StatusOK
-	response.Success = true
-	response.Data = gin.H{
-		"user": user,
-		// "token": gin.H{
-		// 	"access":  accessToken.GetResponseJson(),
-		// 	"refresh": refreshToken.GetResponseJson()},
-	}
-	c.SetCookie("aes-meal", *accessToken+"(AES-Meal)"+*refreshToken, 3600, "/", "localhost", true, true)
+	// // delete old token
+	// err = services.DeleteTokenById("token.ID")
+	// if err != nil {
+	// 	response.Message = err.Error()
+	// 	response.SendResponse(c)
+	// 	return
+	// }
+
+	// accessToken, refreshToken, _ := services.GenerateAccessTokens(user)
+	// response.StatusCode = http.StatusOK
+	// response.Success = true
+	// response.Data = gin.H{
+	// 	"user": user,
+	// 	// "token": gin.H{
+	// 	// 	"access":  accessToken.GetResponseJson(),
+	// 	// 	"refresh": refreshToken.GetResponseJson()},
+	// }
+	// c.SetCookie("aes-meal", *accessToken+"(AES-Meal)"+*refreshToken, 3600, "/", "localhost", true, true)
 	response.SendResponse(c)
 }

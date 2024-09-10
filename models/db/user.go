@@ -10,20 +10,20 @@ const (
 )
 
 type User struct {
-	mgm.DefaultModel `bson:",inline"`
-	Email            string `json:"email" bson:"email"`
-	Password         string `json:"-" bson:"password"`
-	EmployeeId       string `json:"employeeId" bson:"employeeId"`
-	WeeklyMealPlan   []bool `json:"weeklyMealPlan" bson:"weeklyMealPlan"`
-	Name             string `json:"name" bson:"name"`
-	Role             string `json:"role" bson:"role"`
-	MailVerified     bool   `json:"mail_verified" bson:"mail_verified"`
+	mgm.DefaultModel      `bson:",inline"`
+	Email                 string `json:"email" bson:"email"`
+	Password              string `json:"-" bson:"password"`
+	EmployeeId            string `json:"employeeId" bson:"employeeId"`
+	WeeklyMealPlan        []bool `json:"weeklyMealPlan" bson:"weeklyMealPlan"`
+	PendingWeeklyMealPlan []bool `json:"pendingWeeklyMealPlan" bson:"pendingWeeklyMealPlan"`
+	Name                  string `json:"name" bson:"name"`
+	Role                  string `json:"role" bson:"role"`
+	MailVerified          bool   `json:"mail_verified" bson:"mail_verified"`
 }
 
 type UserClaims struct {
 	jwt.RegisteredClaims
-	UserInfo User   `json:"userInfo"`
-	Type     string `json:"type"`
+	UserInfo User `json:"userInfo"`
 }
 
 func NewUser(email string, password string, name string, role string, employeeId string) *User {

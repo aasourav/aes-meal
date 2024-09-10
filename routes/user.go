@@ -31,12 +31,22 @@ func UserAuthRoute(router *gin.RouterGroup) {
 }
 
 func UserRoute(router *gin.RouterGroup) {
-	user := router.Group("/user",middlewares.JWTMiddleware())
+	user := router.Group("/user", middlewares.JWTMiddleware("user"))
 	{
 		user.PUT(
 			"/:userId/update-weekly-meal-plan",
 			validators.UserWeeklyMealPlanValidator(),
 			controllers.UpdateWeeklyMealPlan,
+		)
+	}
+}
+
+func UserAdminRoute(router *gin.RouterGroup) {
+	user := router.Group("/super-user", middlewares.JWTMiddleware("admin"))
+	{
+		user.GET(
+			"/get-pending-weekly-meal-plan",
+			controllers.PendingWeeklyMealPlans,
 		)
 	}
 }

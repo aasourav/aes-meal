@@ -1,7 +1,6 @@
 package middlewares
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/ebubekiryigit/golang-mongodb-rest-api-starter/models"
@@ -10,24 +9,23 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func JWTMiddleware() gin.HandlerFunc {
+func JWTMiddleware(role string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// token := c.GetHeader("Bearer-Token")
 		aesAccess, _ := c.Cookie("aes-meal-access")
-		aesRefresh, _ := c.Cookie("aes-meal-refresh")
+		c.Cookie("aes-meal-refresh")
 
-		fmt.Println("TOKEN MODEL 1:", aesAccess)
-		fmt.Println("TOKEN MODEL 2:", aesRefresh)
+		userInfo, err := services.VerifyToken(aesAccess, db.TokenTypeAccess)
 
-		tokenModel, err := services.VerifyToken(aesAccess, db.TokenTypeAccess)
 		if err != nil {
 			models.SendErrorResponse(c, http.StatusUnauthorized, err.Error())
 			return
 		}
-
-		c.Set("userIdHex", tokenModel.User.Hex())
-		c.Set("userId", tokenModel.ID)
-
+		if role != userInfo.Role {
+			models.SendErrorResponse(c, http.StatusUnauthorized, "User is not previlized")
+			return
+		}
+		c.Set("userInfo", userInfo)
 		c.Next()
 	}
 }

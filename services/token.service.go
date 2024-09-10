@@ -13,10 +13,9 @@ import (
 )
 
 // CreateToken create a new token record
-func CreateToken(user *db.User, tokenType string, expiresAt time.Time) (*string, error) {
+func CreateToken(user *db.User, expiresAt time.Time) (*string, error) {
 	claims := &db.UserClaims{
 		UserInfo: *user,
-		Type:     tokenType,
 		RegisteredClaims: jwt.RegisteredClaims{
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			ExpiresAt: jwt.NewNumericDate(expiresAt),
@@ -56,12 +55,12 @@ func GenerateAccessTokens(user *db.User) (*string, *string, error) {
 	accessExpiresAt := time.Now().Add(time.Duration(Config.JWTAccessExpirationMinutes) * time.Minute)
 	refreshExpiresAt := time.Now().Add(time.Duration(Config.JWTRefreshExpirationDays) * time.Hour * 24)
 
-	accessToken, err := CreateToken(user, db.TokenTypeAccess, accessExpiresAt)
+	accessToken, err := CreateToken(user, accessExpiresAt)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	refreshToken, err := CreateToken(user, db.TokenTypeRefresh, refreshExpiresAt)
+	refreshToken, err := CreateToken(user, refreshExpiresAt)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -70,13 +69,13 @@ func GenerateAccessTokens(user *db.User) (*string, *string, error) {
 }
 
 // VerifyToken checks jwt validity, expire date, blacklisted
-func VerifyToken(token string, tokenType string) (*jwt.Token, error) {
+func VerifyToken(token string, tokenType string) (*db.User, error) {
 	claims := &db.UserClaims{}
-	jwtToken, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
+	_, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
 		return []byte(Config.JWTSecretKey), nil
 	})
 
-	if err != nil || claims.Type != tokenType {
+	if err != nil {
 		return nil, errors.New("not valid token")
 	}
 
@@ -84,15 +83,5 @@ func VerifyToken(token string, tokenType string) (*jwt.Token, error) {
 		return nil, errors.New("token is expired")
 	}
 
-	// tokenModel := &db.Token{}
-	// userId, _ := primitive.ObjectIDFromHex(claims.Subject)
-	// err = mgm.Coll(tokenModel).First(
-	// 	bson.M{"type": tokenType, "user": userId, "blacklisted": false},
-	// 	tokenModel,
-	// )
-	// if err != nil {
-	// 	return nil, errors.New("cannot find token")
-	// }
-
-	return jwtToken, nil
+	return &claims.UserInfo, nil
 }
