@@ -3,6 +3,7 @@ package services
 import (
 	"errors"
 
+	"github.com/ebubekiryigit/golang-mongodb-rest-api-starter/models"
 	db "github.com/ebubekiryigit/golang-mongodb-rest-api-starter/models/db"
 	"github.com/kamva/mgm/v3"
 	"go.mongodb.org/mongo-driver/bson"
@@ -18,6 +19,7 @@ func CreateUser(name string, email string, plainPassword string, employeeId stri
 	}
 
 	user := db.NewUser(email, string(password), name, db.RoleUser, employeeId)
+	user.WeeklyMealPlan = []bool{false, false, false, false, false, false, false}
 	err = mgm.Coll(user).Create(user)
 	if err != nil {
 		return nil, errors.New("cannot create new user")
@@ -35,6 +37,25 @@ func FindUserById(userId primitive.ObjectID) (*db.User, error) {
 	}
 
 	return user, nil
+}
+
+// UpdateNote updates a note with id
+func UpdateUsersWeeklyMealPlan(userId primitive.ObjectID, request *models.WeeklyMealPlanRequest) error {
+	user := &db.User{}
+	err := mgm.Coll(user).FindByID(userId, user)
+	if err != nil {
+		return errors.New("cannot find user")
+	}
+
+	user.WeeklyMealPlan = request.WeeklyMealPlan
+
+	err = mgm.Coll(user).Update(user)
+
+	if err != nil {
+		return errors.New("cannot update")
+	}
+
+	return nil
 }
 
 // FindUserByEmail find user by email

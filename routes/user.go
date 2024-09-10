@@ -33,9 +33,9 @@ func UserRoute(router *gin.RouterGroup) {
 	user := router.Group("/user")
 	{
 		user.PUT(
-			"/update-weekly-meal-plan",
+			"/:userId/update-weekly-meal-plan",
 			validators.UserWeeklyMealPlanValidator(),
-			controllers.Register,
+			controllers.UpdateWeeklyMealPlan,
 		)
 	}
 }

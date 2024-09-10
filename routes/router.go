@@ -24,6 +24,7 @@ func New() *gin.Engine {
 	{
 		PingRoute(v1)
 		UserAuthRoute(v1)
+		UserRoute(v1)
 		NoteRoute(v1, middlewares.JWTMiddleware())
 	}
 

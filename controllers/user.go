@@ -29,20 +29,21 @@ func UpdateWeeklyMealPlan(c *gin.Context) {
 		Success:    false,
 	}
 
-	idHex := c.Param("id")
-	noteId, _ := primitive.ObjectIDFromHex(idHex)
+	idHex := c.Param("userId")
+	_id, _ := primitive.ObjectIDFromHex(idHex)
 
-	userId, exists := c.Get("userId")
-	if !exists {
-		response.Message = "cannot get user"
-		response.SendResponse(c)
-		return
-	}
+	// userId, exists := c.Get("userId")
+	// if !exists {
+	// 	response.Message = "cannot get user"
+	// 	response.SendResponse(c)
+	// 	return
+	// }
 
-	var noteRequest models.NoteRequest
-	_ = c.ShouldBindBodyWith(&noteRequest, binding.JSON)
+	var weeklyMealPlanRequest models.WeeklyMealPlanRequest
+	_ = c.ShouldBindBodyWith(&weeklyMealPlanRequest, binding.JSON)
 
-	err := services.UpdateNote(userId.(primitive.ObjectID), noteId, &noteRequest)
+	// userId.(primitive.ObjectID)
+	err := services.UpdateUsersWeeklyMealPlan(_id, &weeklyMealPlanRequest)
 	if err != nil {
 		response.Message = err.Error()
 		response.SendResponse(c)
