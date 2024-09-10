@@ -70,9 +70,9 @@ func GenerateAccessTokens(user *db.User) (*string, *string, error) {
 }
 
 // VerifyToken checks jwt validity, expire date, blacklisted
-func VerifyToken(token string, tokenType string) (*db.Token, error) {
+func VerifyToken(token string, tokenType string) (*jwt.Token, error) {
 	claims := &db.UserClaims{}
-	_, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
+	jwtToken, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
 		return []byte(Config.JWTSecretKey), nil
 	})
 
@@ -84,15 +84,15 @@ func VerifyToken(token string, tokenType string) (*db.Token, error) {
 		return nil, errors.New("token is expired")
 	}
 
-	tokenModel := &db.Token{}
-	userId, _ := primitive.ObjectIDFromHex(claims.Subject)
-	err = mgm.Coll(tokenModel).First(
-		bson.M{"type": tokenType, "user": userId, "blacklisted": false},
-		tokenModel,
-	)
-	if err != nil {
-		return nil, errors.New("cannot find token")
-	}
+	// tokenModel := &db.Token{}
+	// userId, _ := primitive.ObjectIDFromHex(claims.Subject)
+	// err = mgm.Coll(tokenModel).First(
+	// 	bson.M{"type": tokenType, "user": userId, "blacklisted": false},
+	// 	tokenModel,
+	// )
+	// if err != nil {
+	// 	return nil, errors.New("cannot find token")
+	// }
 
-	return tokenModel, nil
+	return jwtToken, nil
 }

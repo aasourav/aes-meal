@@ -2,6 +2,7 @@ package routes
 
 import (
 	"github.com/ebubekiryigit/golang-mongodb-rest-api-starter/controllers"
+	"github.com/ebubekiryigit/golang-mongodb-rest-api-starter/middlewares"
 	"github.com/ebubekiryigit/golang-mongodb-rest-api-starter/middlewares/validators"
 	"github.com/gin-gonic/gin"
 )
@@ -30,7 +31,7 @@ func UserAuthRoute(router *gin.RouterGroup) {
 }
 
 func UserRoute(router *gin.RouterGroup) {
-	user := router.Group("/user")
+	user := router.Group("/user",middlewares.JWTMiddleware())
 	{
 		user.PUT(
 			"/:userId/update-weekly-meal-plan",
