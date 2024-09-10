@@ -2,20 +2,21 @@ package services
 
 import (
 	"errors"
+	"time"
+
 	db "github.com/ebubekiryigit/golang-mongodb-rest-api-starter/models/db"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/kamva/mgm/v3"
 	"github.com/kamva/mgm/v3/field"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"time"
 )
 
 // CreateToken create a new token record
-func CreateToken(user *db.User, tokenType string, expiresAt time.Time) (*db.Token, error) {
+func CreateToken(user *db.User, tokenType string, expiresAt time.Time) (*string, error) {
 	claims := &db.UserClaims{
-		Email: user.Email,
-		Type:  tokenType,
+		UserInfo: *user,
+		Type:     tokenType,
 		RegisteredClaims: jwt.RegisteredClaims{
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			ExpiresAt: jwt.NewNumericDate(expiresAt),
@@ -29,13 +30,14 @@ func CreateToken(user *db.User, tokenType string, expiresAt time.Time) (*db.Toke
 		return nil, errors.New("cannot create access token")
 	}
 
-	tokenModel := db.NewToken(user.ID, tokenString, tokenType, expiresAt)
-	err = mgm.Coll(tokenModel).Create(tokenModel)
-	if err != nil {
-		return nil, errors.New("cannot save access token to db")
-	}
+	// tokenModel := db.NewToken(user.ID, tokenString, tokenType, expiresAt)
+	// err = mgm.Coll(tokenModel).Create(tokenModel)
+	// if err != nil {
+	// 	return nil, errors.New("cannot save access token to db")
+	// }
 
-	return tokenModel, nil
+	// return tokenModel, nil
+	return &tokenString, nil
 }
 
 // DeleteTokenById delete token with id
@@ -50,7 +52,7 @@ func DeleteTokenById(tokenId primitive.ObjectID) error {
 }
 
 // GenerateAccessTokens generates "access" and "refresh" token for user
-func GenerateAccessTokens(user *db.User) (*db.Token, *db.Token, error) {
+func GenerateAccessTokens(user *db.User) (*string, *string, error) {
 	accessExpiresAt := time.Now().Add(time.Duration(Config.JWTAccessExpirationMinutes) * time.Minute)
 	refreshExpiresAt := time.Now().Add(time.Duration(Config.JWTRefreshExpirationDays) * time.Hour * 24)
 

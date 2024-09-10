@@ -112,12 +112,14 @@ func Login(c *gin.Context) {
 
 	response.StatusCode = http.StatusOK
 	response.Success = true
+
 	response.Data = gin.H{
 		"user": user,
-		"token": gin.H{
-			"access":  accessToken.GetResponseJson(),
-			"refresh": refreshToken.GetResponseJson()},
+		// "token": gin.H{
+		// 	"access":  accessToken.GetResponseJson(),
+		// 	"refresh": refreshToken.GetResponseJson()},
 	}
+	c.SetCookie("aes-meal", *accessToken+"(AES-Meal)"+*refreshToken, 3600, "/", "localhost", true, true)
 	response.SendResponse(c)
 }
 
@@ -163,14 +165,15 @@ func Refresh(c *gin.Context) {
 		return
 	}
 
-	accessToken, refreshToken, err := services.GenerateAccessTokens(user)
+	accessToken, refreshToken, _ := services.GenerateAccessTokens(user)
 	response.StatusCode = http.StatusOK
 	response.Success = true
 	response.Data = gin.H{
 		"user": user,
-		"token": gin.H{
-			"access":  accessToken.GetResponseJson(),
-			"refresh": refreshToken.GetResponseJson()},
+		// "token": gin.H{
+		// 	"access":  accessToken.GetResponseJson(),
+		// 	"refresh": refreshToken.GetResponseJson()},
 	}
+	c.SetCookie("aes-meal", *accessToken+"(AES-Meal)"+*refreshToken, 3600, "/", "localhost", true, true)
 	response.SendResponse(c)
 }

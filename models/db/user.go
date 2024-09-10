@@ -22,8 +22,8 @@ type User struct {
 
 type UserClaims struct {
 	jwt.RegisteredClaims
-	Email string `json:"email"`
-	Type  string `json:"type"`
+	UserInfo User   `json:"userInfo"`
+	Type     string `json:"type"`
 }
 
 func NewUser(email string, password string, name string, role string, employeeId string) *User {
