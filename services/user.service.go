@@ -104,7 +104,7 @@ func UpdateUsersWeeklyMealPlan(userId primitive.ObjectID, request *models.Weekly
 		return errors.New("cannot find user")
 	}
 
-	if utils.IsTimeIsLessThanGivenTime(9) {
+	if utils.ItTimeIsInRange(9, 21) {
 		user.WeeklyMealPlan = request.WeeklyMealPlan
 	} else {
 		user.PendingWeeklyMealPlan = request.WeeklyMealPlan
