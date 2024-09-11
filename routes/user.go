@@ -34,7 +34,7 @@ func UserRoute(router *gin.RouterGroup) {
 	user := router.Group("/user", middlewares.JWTMiddleware("user"))
 	{
 		user.PUT(
-			"/:userId/update-weekly-meal-plan",
+			"/update-weekly-meal-plan",
 			validators.UserWeeklyMealPlanValidator(),
 			controllers.UpdateWeeklyMealPlan,
 		)
