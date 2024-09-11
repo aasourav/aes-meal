@@ -38,6 +38,10 @@ func UserRoute(router *gin.RouterGroup) {
 			validators.UserWeeklyMealPlanValidator(),
 			controllers.UpdateWeeklyMealPlan,
 		)
+		user.DELETE(
+			"/clean-pending-meal",
+			controllers.CleanPendingMeal,
+		)
 	}
 }
 
