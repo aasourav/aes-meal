@@ -165,8 +165,10 @@ func ApproveUserWeeklyPlanService(userId string) error {
 		return err
 	}
 
-	user.WeeklyMealPlan = user.PendingWeeklyMealPlan
-	user.PendingWeeklyMealPlan = []bool{}
+	if len(user.PendingWeeklyMealPlan) > 0 {
+		user.WeeklyMealPlan = user.PendingWeeklyMealPlan
+		user.PendingWeeklyMealPlan = []bool{}
+	}
 
 	err = mgm.Coll(user).Update(user)
 	if err != nil {
