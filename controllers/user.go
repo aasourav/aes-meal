@@ -3,6 +3,7 @@ package controllers
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/ebubekiryigit/golang-mongodb-rest-api-starter/models"
 	db "github.com/ebubekiryigit/golang-mongodb-rest-api-starter/models/db"
@@ -63,8 +64,6 @@ func UpdateWeeklyMealPlan(c *gin.Context) {
 	userInfo, _ := c.Get("userInfo")
 	user, _ := userInfo.(*db.User)
 
-	fmt.Println("MY user:", user.WeeklyMealPlan)
-
 	var weeklyMealPlanRequest models.WeeklyMealPlanRequest
 	_ = c.ShouldBindBodyWith(&weeklyMealPlanRequest, binding.JSON)
 
@@ -82,13 +81,45 @@ func UpdateWeeklyMealPlan(c *gin.Context) {
 }
 
 func Register(c *gin.Context) {
-	var userBody models.WeeklyMealPlanRequest
-	_ = c.ShouldBindBodyWith(&userBody, binding.JSON)
+	var requestBody models.RegisterRequest
+	_ = c.ShouldBindBodyWith(&requestBody, binding.JSON)
 
 	response := &models.Response{
 		StatusCode: http.StatusBadRequest,
 		Success:    false,
 	}
+
+	// is email in use
+	err := services.CheckUserMail(requestBody.Email)
+	if err != nil {
+		response.Message = err.Error()
+		response.SendResponse(c)
+		return
+	}
+
+	// create user record
+	requestBody.Name = strings.TrimSpace(requestBody.Name)
+	user, err := services.CreateUser(requestBody.Name, requestBody.Email, requestBody.Password, requestBody.EmployeeId)
+	if err != nil {
+		response.Message = err.Error()
+		response.SendResponse(c)
+		return
+	}
+
+	// generate access tokens
+	// accessToken, refreshToken, err := services.GenerateAccessTokens(user)
+	if err != nil {
+		response.Message = err.Error()
+		response.SendResponse(c)
+		return
+	}
+
+	response.StatusCode = http.StatusCreated
+	response.Success = true
+	response.Data = gin.H{
+		"user": user,
+	}
+	response.SendResponse(c)
 
 	response.SendResponse(c)
 }

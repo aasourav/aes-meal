@@ -5,6 +5,7 @@ import (
 
 	"github.com/ebubekiryigit/golang-mongodb-rest-api-starter/models"
 	db "github.com/ebubekiryigit/golang-mongodb-rest-api-starter/models/db"
+	"github.com/ebubekiryigit/golang-mongodb-rest-api-starter/utils"
 	"github.com/kamva/mgm/v3"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -12,7 +13,7 @@ import (
 )
 
 // CreateUser create a user record
-func CreateUser(name string, email string, plainPassword string, employeeId string) (*db.User, error) {
+func  CreateUser(name string, email string, plainPassword string, employeeId string) (*db.User, error) {
 	password, err := bcrypt.GenerateFromPassword([]byte(plainPassword), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, errors.New("cannot generate hashed password")
@@ -47,7 +48,11 @@ func UpdateUsersWeeklyMealPlan(userId primitive.ObjectID, request *models.Weekly
 		return errors.New("cannot find user")
 	}
 
-	user.WeeklyMealPlan = request.WeeklyMealPlan
+	if utils.IsTimeIsLessThanGivenTime(9) {
+		user.WeeklyMealPlan = request.WeeklyMealPlan
+	} else {
+		user.PendingWeeklyMealPlan = request.WeeklyMealPlan
+	}
 
 	err = mgm.Coll(user).Update(user)
 
@@ -63,7 +68,7 @@ func PendingUsersWeeklyMealPlanService() (*[]db.User, error) {
 	userColl := &db.User{}
 
 	filter := bson.M{
-		"$where": "this.pendingWeeklyPlan.length > 0",
+		"$where": "this.pendingWeeklyMealPlan.length > 9",
 	}
 
 	err := mgm.Coll(userColl).SimpleFind(users, filter)

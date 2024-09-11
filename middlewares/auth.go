@@ -9,6 +9,15 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func UsersPreviliges(userType string, expectedUserType string) bool {
+	users := map[string]int{
+		"user":       1,
+		"admin":      2,
+		"superAdmin": 3,
+	}
+	return users[userType] >= users[expectedUserType]
+}
+
 func JWTMiddleware(role string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// token := c.GetHeader("Bearer-Token")
@@ -21,7 +30,7 @@ func JWTMiddleware(role string) gin.HandlerFunc {
 			models.SendErrorResponse(c, http.StatusUnauthorized, err.Error())
 			return
 		}
-		if role != userInfo.Role {
+		if !UsersPreviliges(userInfo.Role, role) {
 			models.SendErrorResponse(c, http.StatusUnauthorized, "User is not previlized")
 			return
 		}
