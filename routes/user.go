@@ -54,7 +54,7 @@ func UserAdminRoute(router *gin.RouterGroup) {
 		)
 		user.PUT(
 			"/edit-user-meal-plan/meal/:mealId/new-meal/:newMeal",
-			controllers.ActionPendingWeeklyPlan,
+			controllers.UpdateUserMeal,
 		)
 	}
 }

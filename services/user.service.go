@@ -3,6 +3,7 @@ package services
 import (
 	"errors"
 	"log"
+	"strconv"
 
 	"github.com/ebubekiryigit/golang-mongodb-rest-api-starter/models"
 	db "github.com/ebubekiryigit/golang-mongodb-rest-api-starter/models/db"
@@ -121,11 +122,20 @@ func PendingUsersWeeklyMealPlanService() (*[]db.User, error) {
 func UpdateUserMealService(mealId string, newMeal string) (*db.Meal, error) {
 	mealCollection := &db.Meal{}
 	mealObjectId, _ := primitive.ObjectIDFromHex(mealId)
+	meal, _ := strconv.Atoi(newMeal)
 
 	err := mgm.Coll(mealCollection).First(bson.M{"_id": mealObjectId}, mealCollection)
 	if err != nil {
 		return mealCollection, err
 	}
+
+	mealCollection.NumberOfMeal = meal
+
+	err = mgm.Coll(mealCollection).Update(mealCollection)
+	if err != nil {
+		return mealCollection, err
+	}
+
 	return mealCollection, nil
 }
 
