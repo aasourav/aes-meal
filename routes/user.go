@@ -48,5 +48,9 @@ func UserAdminRoute(router *gin.RouterGroup) {
 			"/get-pending-weekly-meal-plan",
 			controllers.PendingWeeklyMealPlans,
 		)
+		user.PUT(
+			"/action-pending-weekly-meal-plan/action/:actionType/user/:userId",
+			controllers.ActionPendingWeeklyPlan,
+		)
 	}
 }

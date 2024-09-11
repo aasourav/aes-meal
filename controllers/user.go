@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 
@@ -23,6 +24,53 @@ import (
 // @Success      200  {object}  models.Response
 // @Failure      400  {object}  models.Response
 // @Router       /auth/register [post]
+
+func CronjobAction() {
+	users, err := services.GetUsers()
+	if err != nil {
+		log.Println("cronjob get users error: ", err.Error())
+		return
+	}
+
+	log.Println("job start")
+
+	for _, user := range *users {
+		log.Println("job for: ", user.Name)
+		services.CreateUpdateUserMeal(user)
+	}
+}
+
+func ActionPendingWeeklyPlan(c *gin.Context) {
+	response := &models.Response{
+		StatusCode: http.StatusBadRequest,
+		Success:    false,
+	}
+
+	userId := c.Param("userId")
+	actionType := c.Param("actionType")
+
+	if actionType == "approve" {
+		err := services.ApproveUserWeeklyPlanService(userId)
+		if err != nil {
+			response.Message = err.Error()
+			response.SendResponse(c)
+			return
+		}
+		response.StatusCode = http.StatusOK
+		response.Success = true
+	} else if actionType == "reject" {
+		err := services.RejectUserWeeklyPlanService(userId)
+		if err != nil {
+			response.Message = err.Error()
+			response.SendResponse(c)
+			return
+		}
+		response.StatusCode = http.StatusOK
+		response.Success = true
+	}
+
+	response.SendResponse(c)
+}
 
 func PendingWeeklyMealPlans(c *gin.Context) {
 	pendingWeeklyPlans, err := services.PendingUsersWeeklyMealPlanService()
@@ -97,6 +145,13 @@ func Register(c *gin.Context) {
 		return
 	}
 
+	err = services.CheckEmployeeId(requestBody.EmployeeId)
+	if err != nil {
+		response.Message = err.Error()
+		response.SendResponse(c)
+		return
+	}
+
 	// create user record
 	requestBody.Name = strings.TrimSpace(requestBody.Name)
 	user, err := services.CreateUser(requestBody.Name, requestBody.Email, requestBody.Password, requestBody.EmployeeId)
@@ -108,11 +163,11 @@ func Register(c *gin.Context) {
 
 	// generate access tokens
 	// accessToken, refreshToken, err := services.GenerateAccessTokens(user)
-	if err != nil {
-		response.Message = err.Error()
-		response.SendResponse(c)
-		return
-	}
+	// if err != nil {
+	// 	response.Message = err.Error()
+	// 	response.SendResponse(c)
+	// 	return
+	// }
 
 	response.StatusCode = http.StatusCreated
 	response.Success = true
