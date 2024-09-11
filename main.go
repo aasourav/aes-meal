@@ -8,8 +8,10 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/ebubekiryigit/golang-mongodb-rest-api-starter/controllers"
 	"github.com/ebubekiryigit/golang-mongodb-rest-api-starter/routes"
 	"github.com/ebubekiryigit/golang-mongodb-rest-api-starter/services"
+	cronJob "github.com/robfig/cron/v3"
 )
 
 // @title GoLang Rest API Starter Doc
@@ -56,13 +58,21 @@ func main() {
 		}
 	}()
 
+	c := cronJob.New()
+	_, err := c.AddFunc("*/1 * * * *", controllers.CronjobAction)
+	if err != nil {
+		log.Panicln("Cronjob failed")
+	}
+	c.Start()
+
 	// Wait for interrupt signal to gracefully shut down the server with
 	// a timeout of 15 seconds.
-	quit := make(chan os.Signal)
+	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt)
 	<-quit
 	log.Println("Shutdown Server ...")
 
+	c.Stop()
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 	if err := server.Shutdown(ctx); err != nil {

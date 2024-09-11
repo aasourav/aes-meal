@@ -21,7 +21,6 @@ type RegisterRequest struct {
 }
 
 type WeeklyMealPlanRequest struct {
-	UserDocId      string `json:"name"`
 	WeeklyMealPlan []bool `json:"weeklyMealPlan"`
 }
 
@@ -37,7 +36,6 @@ func (a RegisterRequest) Validate() error {
 func (a WeeklyMealPlanRequest) Validate() error {
 	return validation.ValidateStruct(&a,
 		validation.Field(&a.WeeklyMealPlan, validation.Required, validation.Length(7, 7)),
-		validation.Field(&a.UserDocId, validation.Required),
 	)
 }
 
