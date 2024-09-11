@@ -104,7 +104,7 @@ func UpdateUsersWeeklyMealPlan(userId primitive.ObjectID, request *models.Weekly
 		return errors.New("cannot find user")
 	}
 
-	if utils.IsTimeIsLessThanGivenTime(9) {
+	if utils.ItTimeIsInRange(9, 21) {
 		user.WeeklyMealPlan = request.WeeklyMealPlan
 	} else {
 		user.PendingWeeklyMealPlan = request.WeeklyMealPlan
@@ -158,17 +158,36 @@ func UpdateUserMealService(mealId string, newMeal string) (*db.Meal, error) {
 
 func ApproveUserWeeklyPlanService(userId string) error {
 	user := &db.User{}
+	mealCollection := &db.Meal{}
 	userObjectId, _ := primitive.ObjectIDFromHex(userId)
 	err := mgm.Coll(user).First(bson.M{"_id": userObjectId}, user)
 	if err != nil {
 		return err
 	}
 
-	user.WeeklyMealPlan = user.PendingWeeklyMealPlan
-	user.PendingWeeklyMealPlan = []bool{}
+	if len(user.PendingWeeklyMealPlan) > 0 {
+		user.WeeklyMealPlan = user.PendingWeeklyMealPlan
+		user.PendingWeeklyMealPlan = []bool{}
+	}
 
 	err = mgm.Coll(user).Update(user)
+	if err != nil {
+		return err
+	}
 
+	err = mgm.Coll(mealCollection).First(bson.M{"consumerId": userObjectId}, mealCollection)
+	if err != nil {
+		return err
+	}
+
+	dayOfWeek, _, _, _ := utils.GetDateDetails()
+	numberOfMeal := mealCollection.NumberOfMeal
+	if user.WeeklyMealPlan[dayOfWeek] {
+		numberOfMeal = 1
+	}
+	mealCollection.NumberOfMeal = numberOfMeal
+
+	err = mgm.Coll(mealCollection).Update(mealCollection)
 	if err != nil {
 		return err
 	}
