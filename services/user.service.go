@@ -81,7 +81,7 @@ func CreateUpdateUserMeal(user db.User) {
 
 func CleanPendingMeal(userId primitive.ObjectID) error {
 	user := &db.User{}
-	err := mgm.Coll(user).First(userId, user)
+	err := mgm.Coll(user).First(bson.M{"_id": userId}, user)
 	if err != nil {
 		return err
 	}
