@@ -79,6 +79,23 @@ func CreateUpdateUserMeal(user db.User) {
 	}
 }
 
+func CleanPendingMeal(userId primitive.ObjectID) error {
+	user := &db.User{}
+	err := mgm.Coll(user).First(bson.M{"_id": userId}, user)
+	if err != nil {
+		return err
+	}
+
+	user.PendingWeeklyMealPlan = []bool{}
+
+	err = mgm.Coll(user).Update(user)
+
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // UpdateNote updates a note with id
 func UpdateUsersWeeklyMealPlan(userId primitive.ObjectID, request *models.WeeklyMealPlanRequest) error {
 	user := &db.User{}
