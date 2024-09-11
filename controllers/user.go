@@ -72,6 +72,31 @@ func ActionPendingWeeklyPlan(c *gin.Context) {
 	response.SendResponse(c)
 }
 
+func UpdateUserMeal(c *gin.Context) {
+	mealId := c.Param("mealId")
+	newMeal := c.Param("newMeal")
+
+	mealData, err := services.UpdateUserMealService(mealId, newMeal)
+
+	response := &models.Response{
+		StatusCode: http.StatusBadRequest,
+		Success:    false,
+	}
+
+	if err != nil {
+		response.Message = err.Error()
+		response.SendResponse(c)
+		return
+	}
+
+	response.StatusCode = http.StatusOK
+	response.Success = true
+	response.Data = map[string]any{
+		"mealData": mealData,
+	}
+	response.SendResponse(c)
+}
+
 func PendingWeeklyMealPlans(c *gin.Context) {
 	pendingWeeklyPlans, err := services.PendingUsersWeeklyMealPlanService()
 

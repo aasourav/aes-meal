@@ -118,6 +118,17 @@ func PendingUsersWeeklyMealPlanService() (*[]db.User, error) {
 	return users, nil
 }
 
+func UpdateUserMealService(mealId string, newMeal string) (*db.Meal, error) {
+	mealCollection := &db.Meal{}
+	mealObjectId, _ := primitive.ObjectIDFromHex(mealId)
+
+	err := mgm.Coll(mealCollection).First(bson.M{"_id": mealObjectId}, mealCollection)
+	if err != nil {
+		return mealCollection, err
+	}
+	return mealCollection, nil
+}
+
 func ApproveUserWeeklyPlanService(userId string) error {
 	user := &db.User{}
 	userObjectId, _ := primitive.ObjectIDFromHex(userId)
