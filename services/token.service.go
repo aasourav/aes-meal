@@ -78,8 +78,8 @@ func VerifyToken(token string, tokenType string) (*db.User, error) {
 	if err != nil {
 		return nil, errors.New("not valid token")
 	}
-
-	if time.Now().Sub(claims.ExpiresAt.Time) > 10*time.Second {
+	// if time.Now().Sub(claims.ExpiresAt.Time) > 10*time.Second {
+	if time.Since(claims.ExpiresAt.Time) > 10*time.Second {
 		return nil, errors.New("token is expired")
 	}
 
