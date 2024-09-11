@@ -119,6 +119,33 @@ func PendingWeeklyMealPlans(c *gin.Context) {
 	response.SendResponse(c)
 }
 
+func GetMealData(c *gin.Context) {
+	response := &models.Response{
+		StatusCode: http.StatusBadRequest,
+		Success:    false,
+	}
+
+	userInfo, _ := c.Get("userInfo")
+	user, _ := userInfo.(*db.User)
+	monthNumber := c.Param("monthNumber")
+	yearNumber := c.Param("yearNumber")
+
+	mealData, err := services.GetUserMealData(user.ID, monthNumber, yearNumber)
+
+	if err != nil {
+		response.Message = err.Error()
+		response.SendResponse(c)
+		return
+	}
+
+	response.StatusCode = http.StatusOK
+	response.Success = true
+	response.Data = map[string]any{
+		"mealData": mealData,
+	}
+	response.SendResponse(c)
+}
+
 func CleanPendingMeal(c *gin.Context) {
 	response := &models.Response{
 		StatusCode: http.StatusBadRequest,

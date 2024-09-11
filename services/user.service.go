@@ -79,6 +79,21 @@ func CreateUpdateUserMeal(user db.User) {
 	}
 }
 
+func GetUserMealData(userId primitive.ObjectID, monthNumber string, yearNumber string) (*[]db.Meal, error) {
+	mealCollection := &db.Meal{}
+	mealDocs := &[]db.Meal{}
+	month, _ := strconv.Atoi(monthNumber)
+	year, _ := strconv.Atoi(yearNumber)
+
+	err := mgm.Coll(mealCollection).SimpleFind(mealDocs, bson.M{"consumerId": userId, "month": month, "year": year})
+
+	if err != nil {
+		return mealDocs, err
+	}
+
+	return mealDocs, nil
+}
+
 func CleanPendingMeal(userId primitive.ObjectID) error {
 	user := &db.User{}
 	err := mgm.Coll(user).First(bson.M{"_id": userId}, user)

@@ -42,6 +42,10 @@ func UserRoute(router *gin.RouterGroup) {
 			"/clean-pending-meal",
 			controllers.CleanPendingMeal,
 		)
+		user.GET(
+			"/user-meal-data/month/:monthNumber/year/:yearNumber",
+			controllers.GetMealData,
+		)
 	}
 }
 
