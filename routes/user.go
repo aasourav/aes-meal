@@ -31,6 +31,10 @@ func UserAuthRoute(router *gin.RouterGroup) {
 			"/user",
 			controllers.UserAuthorization,
 		)
+		auth.GET(
+			"/logout",
+			controllers.UserLogout,
+		)
 	}
 }
 

@@ -317,6 +317,27 @@ func Login(c *gin.Context) {
 // @Failure      400  {object}  models.Response
 // @Router       /auth/refresh [post]
 
+func UserLogout(c *gin.Context) {
+	response := &models.Response{
+		StatusCode: http.StatusOK,
+		Success:    true,
+		Message:    "successfully logged out",
+	}
+	// Clear the JWT token cookie
+	c.SetCookie(
+		"aes-meal-access", // Cookie name
+		"",                // Empty value
+		-1,                // Expiry in seconds (negative value to delete the cookie)
+		"/",               // Path
+		"",                // Domain (empty for default)
+		true,              // Secure (true if using HTTPS)
+		true,              // HttpOnly
+	)
+
+	// Send a response indicating the user has been logged out
+	response.SendResponse(c)
+}
+
 func UserAuthorization(c *gin.Context) {
 	response := &models.Response{
 		StatusCode: http.StatusBadRequest,
