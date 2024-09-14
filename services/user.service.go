@@ -112,11 +112,11 @@ func CleanPendingMeal(userId primitive.ObjectID) error {
 }
 
 // UpdateNote updates a note with id
-func UpdateUsersWeeklyMealPlan(userId primitive.ObjectID, request *models.WeeklyMealPlanRequest) error {
+func UpdateUsersWeeklyMealPlan(userId primitive.ObjectID, request *models.WeeklyMealPlanRequest) (*db.User, error) {
 	user := &db.User{}
 	err := mgm.Coll(user).FindByID(userId, user)
 	if err != nil {
-		return errors.New("cannot find user")
+		return nil, errors.New("cannot find user")
 	}
 
 	if utils.ItTimeIsInRange(9, 21) {
@@ -128,10 +128,10 @@ func UpdateUsersWeeklyMealPlan(userId primitive.ObjectID, request *models.Weekly
 	err = mgm.Coll(user).Update(user)
 
 	if err != nil {
-		return errors.New("cannot update")
+		return nil, errors.New("cannot update")
 	}
 
-	return nil
+	return user, nil
 }
 
 func PendingUsersWeeklyMealPlanService() (*[]db.User, error) {

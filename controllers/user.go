@@ -11,6 +11,8 @@ import (
 	"github.com/ebubekiryigit/golang-mongodb-rest-api-starter/services"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
+	"github.com/kamva/mgm/v3"
+	"go.mongodb.org/mongo-driver/bson"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -164,6 +166,9 @@ func CleanPendingMeal(c *gin.Context) {
 
 	response.StatusCode = http.StatusOK
 	response.Success = true
+	response.Data = map[string]any{
+		"userData": user,
+	}
 	response.SendResponse(c)
 }
 
@@ -189,7 +194,7 @@ func UpdateWeeklyMealPlan(c *gin.Context) {
 	_ = c.ShouldBindBodyWith(&weeklyMealPlanRequest, binding.JSON)
 
 	// userId.(primitive.ObjectID)
-	err := services.UpdateUsersWeeklyMealPlan(user.ID, &weeklyMealPlanRequest)
+	userCollection, err := services.UpdateUsersWeeklyMealPlan(user.ID, &weeklyMealPlanRequest)
 	if err != nil {
 		response.Message = err.Error()
 		response.SendResponse(c)
@@ -198,6 +203,9 @@ func UpdateWeeklyMealPlan(c *gin.Context) {
 
 	response.StatusCode = http.StatusOK
 	response.Success = true
+	response.Data = map[string]any{
+		"userData": userCollection,
+	}
 	response.SendResponse(c)
 }
 
@@ -353,9 +361,18 @@ func UserAuthorization(c *gin.Context) {
 		return
 	}
 
-	log.Println("ACCESS: ", mycookies)
+	userCollection := &db.User{}
+
+	err = mgm.Coll(userCollection).First(bson.M{"_id": user.ID}, userCollection)
+
+	if err != nil {
+		response.Message = err.Error()
+		response.SendResponse(c)
+		return
+	}
+
 	response.Data = map[string]any{
-		"userData": user,
+		"userData": userCollection,
 	}
 	response.StatusCode = http.StatusOK
 	response.SendResponse(c)
