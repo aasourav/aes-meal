@@ -27,6 +27,10 @@ func UserAuthRoute(router *gin.RouterGroup) {
 			validators.RefreshValidator(),
 			controllers.Refresh,
 		)
+		auth.GET(
+			"/user",
+			controllers.UserAuthorization,
+		)
 	}
 }
 

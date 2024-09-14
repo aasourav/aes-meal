@@ -316,6 +316,31 @@ func Login(c *gin.Context) {
 // @Success      200  {object}  models.Response
 // @Failure      400  {object}  models.Response
 // @Router       /auth/refresh [post]
+
+func UserAuthorization(c *gin.Context) {
+	response := &models.Response{
+		StatusCode: http.StatusBadRequest,
+		Success:    false,
+	}
+	mycookies, _ := c.Cookie("aes-meal-access")
+
+	user, err := services.VerifyToken(mycookies, "aes-meal-access")
+
+	if err != nil {
+		response.Message = err.Error()
+		response.SendResponse(c)
+		return
+	}
+
+	log.Println("ACCESS: ", mycookies)
+	response.Data = map[string]any{
+		"userData": user,
+	}
+	response.StatusCode = http.StatusOK
+	response.SendResponse(c)
+
+}
+
 func Refresh(c *gin.Context) {
 	var requestBody models.RefreshRequest
 	_ = c.ShouldBindBodyWith(&requestBody, binding.JSON)
