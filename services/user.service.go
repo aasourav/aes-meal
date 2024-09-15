@@ -1,9 +1,11 @@
 package services
 
 import (
+	"context"
 	"errors"
 	"log"
 	"strconv"
+	"time"
 
 	"github.com/ebubekiryigit/golang-mongodb-rest-api-starter/models"
 	db "github.com/ebubekiryigit/golang-mongodb-rest-api-starter/models/db"
@@ -11,6 +13,8 @@ import (
 	"github.com/kamva/mgm/v3"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -138,11 +142,32 @@ func PendingUsersWeeklyMealPlanService() (*[]db.User, error) {
 	users := &[]db.User{}
 	userColl := &db.User{}
 
-	filter := bson.M{
-		"$where": "this.pendingWeeklyMealPlan.length > 0",
+	pipeline := mongo.Pipeline{
+		bson.D{{Key: "$match", Value: bson.D{
+			{Key: "pendingWeeklyMealPlan", Value: bson.D{
+				{Key: "$exists", Value: true},
+				{Key: "$ne", Value: nil},
+				{Key: "$type", Value: "array"},
+			}},
+		}}},
+		bson.D{{Key: "$match", Value: bson.D{
+			{Key: "$expr", Value: bson.D{
+				{Key: "$eq", Value: bson.A{bson.D{{Key: "$size", Value: "$pendingWeeklyMealPlan"}}, 7}},
+			}},
+		}}},
+		bson.D{{Key: "$lookup", Value: bson.D{
+			{Key: "from", Value: "meals"},
+			{Key: "localField", Value: "_id"},
+			{Key: "foreignField", Value: "consumerId"},
+			{Key: "as", Value: "mealCount"},
+		}}},
 	}
 
-	err := mgm.Coll(userColl).SimpleFind(users, filter)
+	cursor, err := mgm.Coll(&db.User{}).SimpleAggregate(userColl,pipeline)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(context.TODO())
 
 	if err != nil {
 		return nil, errors.New("no pending weekly plan")
