@@ -68,6 +68,10 @@ func UserAdminRoute(router *gin.RouterGroup) {
 			"/action-pending-weekly-meal-plan/action/:actionType/user/:userId",
 			controllers.ActionPendingWeeklyPlan,
 		)
+		user.GET(
+			"/meal-data-signeture/day/:day/month/:month/year/:year",
+			controllers.UsersDailyMeal,
+		)
 		user.PUT(
 			"/edit-user-meal-plan/meal/:mealId/new-meal/:newMeal",
 			controllers.UpdateUserMeal,

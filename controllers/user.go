@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/ebubekiryigit/golang-mongodb-rest-api-starter/models"
@@ -95,6 +96,32 @@ func UpdateUserMeal(c *gin.Context) {
 	response.Success = true
 	response.Data = map[string]any{
 		"mealData": mealData,
+	}
+	response.SendResponse(c)
+}
+
+func UsersDailyMeal(c *gin.Context) {
+	day, _ := strconv.Atoi(c.Param("day"))
+	month, _ := strconv.Atoi(c.Param("month"))
+	year, _ := strconv.Atoi(c.Param("year"))
+
+	pendingWeeklyPlans, err := services.DailyUsersMealData(day, month, year)
+
+	response := &models.Response{
+		StatusCode: http.StatusBadRequest,
+		Success:    false,
+	}
+
+	if err != nil {
+		response.Message = err.Error()
+		response.SendResponse(c)
+		return
+	}
+
+	response.StatusCode = http.StatusOK
+	response.Success = true
+	response.Data = map[string]any{
+		"userWithMealDoc": pendingWeeklyPlans,
 	}
 	response.SendResponse(c)
 }
