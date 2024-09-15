@@ -1,9 +1,12 @@
 package services
 
 import (
+	"context"
 	"errors"
+	"fmt"
 	"log"
 	"strconv"
+	"time"
 
 	"github.com/ebubekiryigit/golang-mongodb-rest-api-starter/models"
 	db "github.com/ebubekiryigit/golang-mongodb-rest-api-starter/models/db"
@@ -11,6 +14,8 @@ import (
 	"github.com/kamva/mgm/v3"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -112,11 +117,11 @@ func CleanPendingMeal(userId primitive.ObjectID) error {
 }
 
 // UpdateNote updates a note with id
-func UpdateUsersWeeklyMealPlan(userId primitive.ObjectID, request *models.WeeklyMealPlanRequest) error {
+func UpdateUsersWeeklyMealPlan(userId primitive.ObjectID, request *models.WeeklyMealPlanRequest) (*db.User, error) {
 	user := &db.User{}
 	err := mgm.Coll(user).FindByID(userId, user)
 	if err != nil {
-		return errors.New("cannot find user")
+		return nil, errors.New("cannot find user")
 	}
 
 	if utils.ItTimeIsInRange(9, 21) {
@@ -128,27 +133,121 @@ func UpdateUsersWeeklyMealPlan(userId primitive.ObjectID, request *models.Weekly
 	err = mgm.Coll(user).Update(user)
 
 	if err != nil {
-		return errors.New("cannot update")
+		return nil, errors.New("cannot update")
 	}
 
-	return nil
+	return user, nil
 }
 
-func PendingUsersWeeklyMealPlanService() (*[]db.User, error) {
-	users := &[]db.User{}
+func DailyUsersMealData(day int, month int, year int) ([]bson.M, error) {
+	// users := &[]db.User{}
 	userColl := &db.User{}
 
-	filter := bson.M{
-		"$where": "this.pendingWeeklyMealPlan.length > 0",
+	pipeline := mongo.Pipeline{
+		bson.D{{Key: "$lookup", Value: bson.D{
+			{Key: "from", Value: "meals"},
+			{Key: "localField", Value: "_id"},
+			{Key: "foreignField", Value: "consumerId"},
+			{Key: "as", Value: "mealsConsumed"},
+		}}},
+		bson.D{{Key: "$addFields", Value: bson.D{
+			{Key: "mealsConsumed", Value: bson.D{
+				{Key: "$filter", Value: bson.D{
+					{Key: "input", Value: "$mealsConsumed"},
+					{Key: "as", Value: "meal"},
+					{Key: "cond", Value: bson.D{
+						{Key: "$and", Value: bson.A{
+							bson.D{{Key: "$eq", Value: bson.A{"$$meal.dayOfMonth", day}}},
+							bson.D{{Key: "$eq", Value: bson.A{"$$meal.month", month}}},
+							bson.D{{Key: "$eq", Value: bson.A{"$$meal.year", year}}},
+						}},
+					}},
+				}},
+			}},
+		}}},
+		bson.D{{Key: "$match", Value: bson.D{
+			{Key: "mealsConsumed", Value: bson.D{
+				{Key: "$ne", Value: bson.A{}},
+			}},
+		}}},
 	}
 
-	err := mgm.Coll(userColl).SimpleFind(users, filter)
-
+	cursor, err := mgm.Coll(userColl).Aggregate(context.TODO(), pipeline,
+		options.Aggregate().SetMaxTime(time.Minute*1),
+		options.Aggregate().SetAllowDiskUse(true))
 	if err != nil {
-		return nil, errors.New("no pending weekly plan")
+		return nil, err
+	}
+	defer cursor.Close(context.TODO())
+
+	var results []bson.M
+
+	for cursor.Next(context.TODO()) {
+		var result bson.M
+		err := cursor.Decode(&result)
+		if err != nil {
+			log.Fatal(err)
+		}
+		results = append(results, result)
 	}
 
-	return users, nil
+	// if err != nil {
+	// 	return nil, errors.New("no pending weekly plan")
+	// }
+
+	return results, nil
+}
+
+func PendingUsersWeeklyMealPlanService() ([]bson.M, error) {
+	// users := &[]db.User{}
+	userColl := &db.User{}
+
+	pipeline := mongo.Pipeline{
+		bson.D{{Key: "$match", Value: bson.D{
+			{Key: "pendingWeeklyMealPlan", Value: bson.D{
+				{Key: "$exists", Value: true},
+				{Key: "$ne", Value: nil},
+				{Key: "$type", Value: "array"},
+			}},
+		}}},
+		bson.D{{Key: "$match", Value: bson.D{
+			{Key: "$expr", Value: bson.D{
+				{Key: "$eq", Value: bson.A{bson.D{{Key: "$size", Value: "$pendingWeeklyMealPlan"}}, 7}},
+			}},
+		}}},
+		bson.D{{Key: "$lookup", Value: bson.D{
+			{Key: "from", Value: "meals"},
+			{Key: "localField", Value: "_id"},
+			{Key: "foreignField", Value: "consumerId"},
+			{Key: "as", Value: "mealCount"},
+		}}},
+	}
+
+	cursor, err := mgm.Coll(userColl).Aggregate(context.TODO(), pipeline,
+		options.Aggregate().SetMaxTime(time.Minute*1),
+		options.Aggregate().SetAllowDiskUse(true))
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(context.TODO())
+
+	var results []bson.M
+
+	for cursor.Next(context.TODO()) {
+		var result bson.M
+		err := cursor.Decode(&result)
+		if err != nil {
+			log.Fatal(err)
+		}
+		results = append(results, result)
+	}
+
+	// if err != nil {
+	// 	return nil, errors.New("no pending weekly plan")
+	// }
+
+	fmt.Println(results)
+	return results, nil
 }
 
 func UpdateUserMealService(mealId string, newMeal string) (*db.Meal, error) {

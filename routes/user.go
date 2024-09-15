@@ -27,6 +27,14 @@ func UserAuthRoute(router *gin.RouterGroup) {
 			validators.RefreshValidator(),
 			controllers.Refresh,
 		)
+		auth.GET(
+			"/user",
+			controllers.UserAuthorization,
+		)
+		auth.GET(
+			"/logout",
+			controllers.UserLogout,
+		)
 	}
 }
 
@@ -59,6 +67,10 @@ func UserAdminRoute(router *gin.RouterGroup) {
 		user.PUT(
 			"/action-pending-weekly-meal-plan/action/:actionType/user/:userId",
 			controllers.ActionPendingWeeklyPlan,
+		)
+		user.GET(
+			"/meal-data-signeture/day/:day/month/:month/year/:year",
+			controllers.UsersDailyMeal,
 		)
 		user.PUT(
 			"/edit-user-meal-plan/meal/:mealId/new-meal/:newMeal",

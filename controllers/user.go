@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/ebubekiryigit/golang-mongodb-rest-api-starter/models"
@@ -11,6 +12,8 @@ import (
 	"github.com/ebubekiryigit/golang-mongodb-rest-api-starter/services"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
+	"github.com/kamva/mgm/v3"
+	"go.mongodb.org/mongo-driver/bson"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -97,6 +100,32 @@ func UpdateUserMeal(c *gin.Context) {
 	response.SendResponse(c)
 }
 
+func UsersDailyMeal(c *gin.Context) {
+	day, _ := strconv.Atoi(c.Param("day"))
+	month, _ := strconv.Atoi(c.Param("month"))
+	year, _ := strconv.Atoi(c.Param("year"))
+
+	pendingWeeklyPlans, err := services.DailyUsersMealData(day, month, year)
+
+	response := &models.Response{
+		StatusCode: http.StatusBadRequest,
+		Success:    false,
+	}
+
+	if err != nil {
+		response.Message = err.Error()
+		response.SendResponse(c)
+		return
+	}
+
+	response.StatusCode = http.StatusOK
+	response.Success = true
+	response.Data = map[string]any{
+		"userWithMealDoc": pendingWeeklyPlans,
+	}
+	response.SendResponse(c)
+}
+
 func PendingWeeklyMealPlans(c *gin.Context) {
 	pendingWeeklyPlans, err := services.PendingUsersWeeklyMealPlanService()
 
@@ -164,6 +193,9 @@ func CleanPendingMeal(c *gin.Context) {
 
 	response.StatusCode = http.StatusOK
 	response.Success = true
+	response.Data = map[string]any{
+		"userData": user,
+	}
 	response.SendResponse(c)
 }
 
@@ -189,7 +221,7 @@ func UpdateWeeklyMealPlan(c *gin.Context) {
 	_ = c.ShouldBindBodyWith(&weeklyMealPlanRequest, binding.JSON)
 
 	// userId.(primitive.ObjectID)
-	err := services.UpdateUsersWeeklyMealPlan(user.ID, &weeklyMealPlanRequest)
+	userCollection, err := services.UpdateUsersWeeklyMealPlan(user.ID, &weeklyMealPlanRequest)
 	if err != nil {
 		response.Message = err.Error()
 		response.SendResponse(c)
@@ -198,6 +230,9 @@ func UpdateWeeklyMealPlan(c *gin.Context) {
 
 	response.StatusCode = http.StatusOK
 	response.Success = true
+	response.Data = map[string]any{
+		"userData": userCollection,
+	}
 	response.SendResponse(c)
 }
 
@@ -316,6 +351,61 @@ func Login(c *gin.Context) {
 // @Success      200  {object}  models.Response
 // @Failure      400  {object}  models.Response
 // @Router       /auth/refresh [post]
+
+func UserLogout(c *gin.Context) {
+	response := &models.Response{
+		StatusCode: http.StatusOK,
+		Success:    true,
+		Message:    "successfully logged out",
+	}
+	// Clear the JWT token cookie
+	c.SetCookie(
+		"aes-meal-access", // Cookie name
+		"",                // Empty value
+		-1,                // Expiry in seconds (negative value to delete the cookie)
+		"/",               // Path
+		"",                // Domain (empty for default)
+		true,              // Secure (true if using HTTPS)
+		true,              // HttpOnly
+	)
+
+	// Send a response indicating the user has been logged out
+	response.SendResponse(c)
+}
+
+func UserAuthorization(c *gin.Context) {
+	response := &models.Response{
+		StatusCode: http.StatusBadRequest,
+		Success:    false,
+	}
+	mycookies, _ := c.Cookie("aes-meal-access")
+
+	user, err := services.VerifyToken(mycookies, "aes-meal-access")
+
+	if err != nil {
+		response.Message = err.Error()
+		response.SendResponse(c)
+		return
+	}
+
+	userCollection := &db.User{}
+
+	err = mgm.Coll(userCollection).First(bson.M{"_id": user.ID}, userCollection)
+
+	if err != nil {
+		response.Message = err.Error()
+		response.SendResponse(c)
+		return
+	}
+
+	response.Data = map[string]any{
+		"userData": userCollection,
+	}
+	response.StatusCode = http.StatusOK
+	response.SendResponse(c)
+
+}
+
 func Refresh(c *gin.Context) {
 	var requestBody models.RefreshRequest
 	_ = c.ShouldBindBodyWith(&requestBody, binding.JSON)
