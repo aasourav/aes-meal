@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"strconv"
 	"time"
@@ -138,8 +139,67 @@ func UpdateUsersWeeklyMealPlan(userId primitive.ObjectID, request *models.Weekly
 	return user, nil
 }
 
-func PendingUsersWeeklyMealPlanService() (*[]db.User, error) {
-	users := &[]db.User{}
+func DailyUsersMealData(day int, month int, year int) ([]bson.M, error) {
+	// users := &[]db.User{}
+	userColl := &db.User{}
+
+	pipeline := mongo.Pipeline{
+		bson.D{{Key: "$lookup", Value: bson.D{
+			{Key: "from", Value: "meals"},
+			{Key: "localField", Value: "_id"},
+			{Key: "foreignField", Value: "consumerId"},
+			{Key: "as", Value: "mealsConsumed"},
+		}}},
+		bson.D{{Key: "$addFields", Value: bson.D{
+			{Key: "mealsConsumed", Value: bson.D{
+				{Key: "$filter", Value: bson.D{
+					{Key: "input", Value: "$mealsConsumed"},
+					{Key: "as", Value: "meal"},
+					{Key: "cond", Value: bson.D{
+						{Key: "$and", Value: bson.A{
+							bson.D{{Key: "$eq", Value: bson.A{"$$meal.dayOfMonth", day}}},
+							bson.D{{Key: "$eq", Value: bson.A{"$$meal.month", month}}},
+							bson.D{{Key: "$eq", Value: bson.A{"$$meal.year", year}}},
+						}},
+					}},
+				}},
+			}},
+		}}},
+		bson.D{{Key: "$match", Value: bson.D{
+			{Key: "mealsConsumed", Value: bson.D{
+				{Key: "$ne", Value: bson.A{}},
+			}},
+		}}},
+	}
+
+	cursor, err := mgm.Coll(userColl).Aggregate(context.TODO(), pipeline,
+		options.Aggregate().SetMaxTime(time.Minute*1),
+		options.Aggregate().SetAllowDiskUse(true))
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(context.TODO())
+
+	var results []bson.M
+
+	for cursor.Next(context.TODO()) {
+		var result bson.M
+		err := cursor.Decode(&result)
+		if err != nil {
+			log.Fatal(err)
+		}
+		results = append(results, result)
+	}
+
+	// if err != nil {
+	// 	return nil, errors.New("no pending weekly plan")
+	// }
+
+	return results, nil
+}
+
+func PendingUsersWeeklyMealPlanService() ([]bson.M, error) {
+	// users := &[]db.User{}
 	userColl := &db.User{}
 
 	pipeline := mongo.Pipeline{
@@ -163,17 +223,31 @@ func PendingUsersWeeklyMealPlanService() (*[]db.User, error) {
 		}}},
 	}
 
-	cursor, err := mgm.Coll(&db.User{}).SimpleAggregate(userColl,pipeline)
+	cursor, err := mgm.Coll(userColl).Aggregate(context.TODO(), pipeline,
+		options.Aggregate().SetMaxTime(time.Minute*1),
+		options.Aggregate().SetAllowDiskUse(true))
 	if err != nil {
 		return nil, err
 	}
 	defer cursor.Close(context.TODO())
 
-	if err != nil {
-		return nil, errors.New("no pending weekly plan")
+	var results []bson.M
+
+	for cursor.Next(context.TODO()) {
+		var result bson.M
+		err := cursor.Decode(&result)
+		if err != nil {
+			log.Fatal(err)
+		}
+		results = append(results, result)
 	}
 
-	return users, nil
+	// if err != nil {
+	// 	return nil, errors.New("no pending weekly plan")
+	// }
+
+	fmt.Println(results)
+	return results, nil
 }
 
 func UpdateUserMealService(mealId string, newMeal string) (*db.Meal, error) {
