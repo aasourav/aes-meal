@@ -1,12 +1,18 @@
 package utils
 
-import "time"
+import (
+	"time"
+)
 
-func ItTimeIsInRange(beforeTime int, afterTime int) bool {
+func ItTimeIsInRange(afterTime int, beforeTime int) bool {
 	now := time.Now()
-	before := time.Date(now.Year(), now.Month(), now.Day(), beforeTime, 0, 0, 0, now.Location())
-	after := time.Date(now.Year(), now.Month(), now.Day(), beforeTime, 0, 0, 0, now.Location())
-	return now.Before(before) && now.After(after)
+	// before := time.Date(now.Year(), now.Month(), now.Day(), beforeTime, 0, 0, 0, now.Location())
+	// after := time.Date(now.Year(), now.Month(), now.Day(), beforeTime, 0, 0, 0, now.Location())
+	curHour := now.Local().Hour()
+	// fmt.Println("HI temp:", now.Before(before), now.After(after))
+	// return now.Before(before) && now.After(after)
+	return curHour < beforeTime && curHour > afterTime
+
 }
 
 func GetDateDetails() (dayOfWeek int, dayOfMonth int, month int, year int) {

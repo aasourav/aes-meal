@@ -3,7 +3,6 @@ package services
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log"
 	"strconv"
 	"time"
@@ -123,8 +122,10 @@ func UpdateUsersWeeklyMealPlan(userId primitive.ObjectID, request *models.Weekly
 	if err != nil {
 		return nil, errors.New("cannot find user")
 	}
-
-	if utils.ItTimeIsInRange(9, 21) {
+	// fmt.Println("TODAY: ", int(time.Now().Local().Weekday()))
+	weekDayIndex := int(time.Now().Local().Weekday())
+	// user.WeeklyMealPlan
+	if utils.ItTimeIsInRange(12, 22) && user.WeeklyMealPlan[weekDayIndex] == request.WeeklyMealPlan[weekDayIndex] {
 		user.WeeklyMealPlan = request.WeeklyMealPlan
 	} else {
 		user.PendingWeeklyMealPlan = request.WeeklyMealPlan
@@ -246,7 +247,6 @@ func PendingUsersWeeklyMealPlanService() ([]bson.M, error) {
 	// 	return nil, errors.New("no pending weekly plan")
 	// }
 
-	fmt.Println(results)
 	return results, nil
 }
 
