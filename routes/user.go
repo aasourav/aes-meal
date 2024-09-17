@@ -78,7 +78,7 @@ func UserAdminRoute(router *gin.RouterGroup) {
 		)
 		user.GET(
 			"/users-total-meal/month/:month/year/:year",
-			controllers.UpdateUserMeal,
+			controllers.UsersTotalMealByMonth,
 		)
 	}
 }
