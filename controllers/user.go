@@ -75,6 +75,30 @@ func ActionPendingWeeklyPlan(c *gin.Context) {
 	response.SendResponse(c)
 }
 
+func UsersTotalMealByMonth(c *gin.Context) {
+	month := c.Param("month")
+	year := c.Param("year")
+
+	response := &models.Response{
+		StatusCode: http.StatusBadRequest,
+		Success:    false,
+	}
+
+	usersData, err := services.UsersTotalMealByMonthService(month, year)
+	if err != nil {
+		response.Message = err.Error()
+		response.SendResponse(c)
+		return
+	}
+
+	response.StatusCode = http.StatusOK
+	response.Success = true
+	response.Data = map[string]any{
+		"userData": usersData,
+	}
+	response.SendResponse(c)
+}
+
 func UpdateUserMeal(c *gin.Context) {
 	mealId := c.Param("mealId")
 	newMeal := c.Param("newMeal")
