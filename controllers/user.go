@@ -80,7 +80,7 @@ func UsersTotalMealByMonth(c *gin.Context) {
 	year := c.Param("year")
 
 	// Retrieve the 'name' query parameter, default to 'Guest' if not provided
-	name := c.DefaultQuery("name", "")
+	employeeQuery := c.DefaultQuery("employeeQuery", "")
 
 	// Retrieve the 'age' query parameter, if it exists
 	// age := c.Query("age")
@@ -90,7 +90,7 @@ func UsersTotalMealByMonth(c *gin.Context) {
 		Success:    false,
 	}
 
-	usersData, err := services.UsersTotalMealByMonthService(month, year)
+	usersData, err := services.UsersTotalMealByMonthService(month, year, employeeQuery)
 	if err != nil {
 		response.Message = err.Error()
 		response.SendResponse(c)
