@@ -250,26 +250,41 @@ func PendingUsersWeeklyMealPlanService() ([]bson.M, error) {
 	return results, nil
 }
 
-func UsersTotalMealByMonthService(month string, year string) ([]bson.M, error) {
+func UsersTotalMealByMonthService(month string, year string, employeeQuery string) ([]bson.M, error) {
 	monthInt, _ := strconv.Atoi(month)
 	yearInt, _ := strconv.Atoi(year)
 
 	userColl := &db.User{}
 
 	pipeline := mongo.Pipeline{
+		// First, match the user by partial employeeId using $regex
+		bson.D{{Key: "$match", Value: bson.D{
+			{Key: "employeeId", Value: bson.D{
+				{Key: "$regex", Value: employeeQuery}, // This matches employeeIds that contain "015"
+				{Key: "$options", Value: "i"},         // Case-insensitive matching (optional)
+			}},
+		}}},
+
+		// Lookup meals based on user _id and consumerId in meals collection
 		bson.D{{Key: "$lookup", Value: bson.D{
 			{Key: "from", Value: "meals"},
 			{Key: "localField", Value: "_id"},
 			{Key: "foreignField", Value: "consumerId"},
 			{Key: "as", Value: "mealConsumption"},
 		}}},
+
+		// Unwind the mealConsumption array
 		bson.D{{Key: "$unwind", Value: bson.D{
 			{Key: "path", Value: "$mealConsumption"},
 		}}},
+
+		// Match the specific month and year for meal consumption
 		bson.D{{Key: "$match", Value: bson.D{
-			{Key: "mealConsumption.month", Value: monthInt},
-			{Key: "mealConsumption.year", Value: yearInt},
+			{Key: "mealConsumption.month", Value: monthInt}, // Replace with dynamic month value
+			{Key: "mealConsumption.year", Value: yearInt},   // Replace with dynamic year value
 		}}},
+
+		// Group by user _id and calculate the total meals consumed
 		bson.D{{Key: "$group", Value: bson.D{
 			{Key: "_id", Value: "$_id"},
 			{Key: "totalMeals", Value: bson.D{

@@ -79,6 +79,12 @@ func UsersTotalMealByMonth(c *gin.Context) {
 	month := c.Param("month")
 	year := c.Param("year")
 
+	// Retrieve the 'name' query parameter, default to 'Guest' if not provided
+	name := c.DefaultQuery("name", "")
+
+	// Retrieve the 'age' query parameter, if it exists
+	// age := c.Query("age")
+
 	response := &models.Response{
 		StatusCode: http.StatusBadRequest,
 		Success:    false,
