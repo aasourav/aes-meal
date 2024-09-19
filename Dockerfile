@@ -1,32 +1,31 @@
-FROM golang:1.20-bullseye
+FROM golang:1.23.0-bookworm AS build
 
-RUN apt update
+ARG upx_version=4.2.4
+
+RUN apt-get update && apt-get install -y --no-install-recommends xz-utils && \
+  curl -Ls https://github.com/upx/upx/releases/download/v${upx_version}/upx-${upx_version}-amd64_linux.tar.xz -o - | tar xvJf - -C /tmp && \
+  cp /tmp/upx-${upx_version}-amd64_linux/upx /usr/local/bin/ && \
+  chmod +x /usr/local/bin/upx && \
+  apt-get remove -y xz-utils && \
+  rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-COPY go.mod go.sum ./
+COPY go.mod ./
+COPY go.sum ./
+# COPY operator_helm_packages /operator_helm_packages
+# COPY ansible /ansible
 
-RUN go mod download
 
+RUN go mod download && go mod verify
+
+# COPY *.go ./
 COPY . .
 
-# Change .env with docker
-# COPY .env.docker ./.env
+RUN CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -o server -a -ldflags="-s -w" -installsuffix cgo
+RUN upx --ultra-brute -qq server && upx -t server
+FROM scratch
 
-ENV SERVER_ADDR=localhost
-ENV SERVER_PORT=8080
-ENV MONGO_URI=mongodb://localhost:27017
-ENV MONGO_DATABASE=exampledb
-ENV JWT_SECRET=My.Ultra.Secure.Password
-ENV JWT_ACCESS_EXPIRATION_MINUTES=1440
-ENV JWT_REFRESH_EXPIRATION_DAYS=7
-ENV MODE=release
+COPY --from=build /app/server /server
 
-# Build the Go app
-RUN go build -o main .
-
-# Expose port 8080 to the outside world
-EXPOSE 8080
-
-# Run the executable
-CMD ["./main"]
+ENTRYPOINT ["/server"]
